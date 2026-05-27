@@ -44,6 +44,7 @@ public class TimerFragment extends Fragment {
     private long touchDownTime;
     private boolean holdReady = false;
     private boolean touchStartedFromIdle = false; // first tap that entered INSPECTION
+    private String inspectionPenalty = null; // "+2" if inspection ran 15-17s
     private final Runnable holdReadyRunnable = () -> {
         holdReady = true;
         binding.tvTimer.setTextColor(ContextCompat.getColor(requireContext(), R.color.timer_ready));
@@ -152,10 +153,11 @@ public class TimerFragment extends Fragment {
             if (inspectionSecondsLeft >= 0) {
                 startRunning();
             } else if (inspectionSecondsLeft >= -2) {
-                // countdown at -1 or -2: 16–17 seconds elapsed → +2
-                autoRecord("+2");
+                // 15–17 seconds elapsed → start timer with +2 penalty applied at stop
+                inspectionPenalty = "+2";
+                startRunning();
             } else {
-                // countdown below -2: >17 seconds elapsed → DNF
+                // >17 seconds elapsed → DNF, no timer
                 autoRecord("DNF");
             }
             return true;
@@ -166,6 +168,7 @@ public class TimerFragment extends Fragment {
     private void startInspection() {
         state = State.INSPECTION;
         inspectionSecondsLeft = INSPECTION_SECONDS;
+        inspectionPenalty = null;
         binding.tvScramble.setVisibility(View.GONE);
         binding.btnHistory.setVisibility(View.GONE);
         binding.tvTimer.setText(String.valueOf(INSPECTION_SECONDS));
@@ -187,7 +190,8 @@ public class TimerFragment extends Fragment {
         pausedElapsed = SystemClock.elapsedRealtime() - startElapsed;
         state = State.RESULT;
 
-        Solve solve = new Solve(pausedElapsed, currentScramble, System.currentTimeMillis(), "OK");
+        String status = inspectionPenalty != null ? inspectionPenalty : "OK";
+        Solve solve = new Solve(pausedElapsed, currentScramble, System.currentTimeMillis(), status);
         currentSolve = solve;
         viewModel.insertSolve(solve, id -> currentSolve.id = (int) (long) id);
 
