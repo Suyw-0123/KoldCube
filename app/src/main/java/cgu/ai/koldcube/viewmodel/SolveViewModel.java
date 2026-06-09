@@ -50,6 +50,10 @@ public class SolveViewModel extends AndroidViewModel {
         executor.execute(() -> dao.deleteSolve(solve));
     }
 
+    public void deleteAllSolves() {
+        executor.execute(dao::deleteAll);
+    }
+
     @Override
     protected void onCleared() {
         super.onCleared();

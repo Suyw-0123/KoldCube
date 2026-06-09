@@ -1,5 +1,11 @@
 package cgu.ai.koldcube;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.Drawable;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -29,6 +35,7 @@ public class TimerFragment extends Fragment {
 
     private FragmentTimerBinding binding;
     private SolveViewModel viewModel;
+    private SharedPreferences prefs;
 
     private State state = State.IDLE;
     private String currentScramble = "";
@@ -89,6 +96,8 @@ public class TimerFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(SolveViewModel.class);
+        prefs = requireContext().getSharedPreferences(
+                SettingsFragment.PREFS_NAME, Context.MODE_PRIVATE);
 
         refreshScramble();
         resetToIdle();
@@ -114,16 +123,18 @@ public class TimerFragment extends Fragment {
     private boolean onTouchDown() {
         switch (state) {
             case IDLE:
-                touchStartedFromIdle = true;
-                startInspection();
+                if (isInspectionEnabled()) {
+                    touchStartedFromIdle = true;
+                    startInspection();
+                } else {
+                    // No WCA inspection: hold-to-ready then release starts timing directly.
+                    armDirectStart();
+                    beginHold();
+                }
                 return true;
             case INSPECTION:
                 touchStartedFromIdle = false;
-                // Begin hold detection
-                touchDownTime = SystemClock.elapsedRealtime();
-                holdReady = false;
-                binding.tvTimer.setTextColor(ContextCompat.getColor(requireContext(), R.color.timer_holding));
-                handler.postDelayed(holdReadyRunnable, HOLD_THRESHOLD_MS);
+                beginHold();
                 return true;
             case RUNNING:
                 stopTimer();
@@ -165,6 +176,31 @@ public class TimerFragment extends Fragment {
         return false;
     }
 
+    private boolean isInspectionEnabled() {
+        return prefs.getBoolean(SettingsFragment.KEY_INSPECTION, SettingsFragment.DEFAULT_INSPECTION);
+    }
+
+    /**
+     * Enter the "armed" state used when WCA inspection is disabled: no countdown
+     * runs, so the subsequent hold-and-release in onTouchUp starts timing
+     * immediately with no penalty (inspectionSecondsLeft stays >= 0).
+     */
+    private void armDirectStart() {
+        state = State.INSPECTION;
+        inspectionSecondsLeft = INSPECTION_SECONDS;
+        inspectionPenalty = null;
+        touchStartedFromIdle = false;
+        binding.tvScramble.setVisibility(View.GONE);
+        binding.btnHistory.setVisibility(View.GONE);
+    }
+
+    private void beginHold() {
+        touchDownTime = SystemClock.elapsedRealtime();
+        holdReady = false;
+        binding.tvTimer.setTextColor(ContextCompat.getColor(requireContext(), R.color.timer_holding));
+        handler.postDelayed(holdReadyRunnable, HOLD_THRESHOLD_MS);
+    }
+
     private void startInspection() {
         state = State.INSPECTION;
         inspectionSecondsLeft = INSPECTION_SECONDS;
@@ -182,11 +218,13 @@ public class TimerFragment extends Fragment {
         startElapsed = SystemClock.elapsedRealtime();
         binding.tvTimer.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
         binding.tvTimer.setText("0.00");
+        startLoadingAnim();
         handler.post(timerRunnable);
     }
 
     private void stopTimer() {
         handler.removeCallbacks(timerRunnable);
+        stopLoadingAnim();
         pausedElapsed = SystemClock.elapsedRealtime() - startElapsed;
         state = State.RESULT;
 
@@ -195,7 +233,21 @@ public class TimerFragment extends Fragment {
         currentSolve = solve;
         viewModel.insertSolve(solve, id -> currentSolve.id = (int) (long) id);
 
+        playFinishSound();
         showResult();
+    }
+
+    private void playFinishSound() {
+        if (!prefs.getBoolean(SettingsFragment.KEY_SOUND, SettingsFragment.DEFAULT_SOUND)) {
+            return;
+        }
+        try {
+            final ToneGenerator tone = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+            tone.startTone(ToneGenerator.TONE_PROP_BEEP, 200);
+            handler.postDelayed(tone::release, 300);
+        } catch (RuntimeException ignored) {
+            // ToneGenerator can throw if audio resources are unavailable; ignore.
+        }
     }
 
     private void autoRecord(String status) {
@@ -244,8 +296,25 @@ public class TimerFragment extends Fragment {
                 ? ContextCompat.getColor(requireContext(), R.color.status_dnf) : dim);
     }
 
+    private void startLoadingAnim() {
+        binding.ivLoadingAnim.setVisibility(View.VISIBLE);
+        Drawable d = binding.ivLoadingAnim.getDrawable();
+        if (d instanceof AnimationDrawable) {
+            ((AnimationDrawable) d).start();
+        }
+    }
+
+    private void stopLoadingAnim() {
+        Drawable d = binding.ivLoadingAnim.getDrawable();
+        if (d instanceof AnimationDrawable) {
+            ((AnimationDrawable) d).stop();
+        }
+        binding.ivLoadingAnim.setVisibility(View.GONE);
+    }
+
     private void resetToIdle() {
         handler.removeCallbacksAndMessages(null);
+        stopLoadingAnim();
         state = State.IDLE;
         currentSolve = null;
         holdReady = false;

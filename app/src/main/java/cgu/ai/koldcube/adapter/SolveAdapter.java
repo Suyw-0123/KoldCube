@@ -22,6 +22,7 @@ import java.util.Locale;
 public class SolveAdapter extends RecyclerView.Adapter<SolveAdapter.ViewHolder> {
     private List<Solve> solves = new ArrayList<>();
     private OnItemClickListener listener;
+    private int contextMenuPosition = -1;
 
     public interface OnItemClickListener {
         void onItemClick(Solve solve);
@@ -29,6 +30,10 @@ public class SolveAdapter extends RecyclerView.Adapter<SolveAdapter.ViewHolder> 
 
     public void setOnItemClickListener(OnItemClickListener l) {
         this.listener = l;
+    }
+
+    public int getContextMenuPosition() {
+        return contextMenuPosition;
     }
 
     public void setSolves(List<Solve> newSolves) {
@@ -59,7 +64,7 @@ public class SolveAdapter extends RecyclerView.Adapter<SolveAdapter.ViewHolder> 
         return solves.size();
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvIndex, tvTime, tvStatus, tvDate;
 
         ViewHolder(View itemView) {
@@ -94,6 +99,14 @@ public class SolveAdapter extends RecyclerView.Adapter<SolveAdapter.ViewHolder> 
 
             itemView.setOnClickListener(v -> {
                 if (listener != null) listener.onItemClick(solve);
+            });
+
+            // Track which item was long-pressed so the context menu can act on it.
+            // Returning false lets the long-press propagate so the registered
+            // context menu still opens.
+            itemView.setOnLongClickListener(v -> {
+                contextMenuPosition = getBindingAdapterPosition();
+                return false;
             });
         }
     }

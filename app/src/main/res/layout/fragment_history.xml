@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:background="@color/bg_black">
 
-    <!-- 統計摘要 -->
+    <!-- Statistics summary -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -98,7 +98,7 @@
         android:layout_height="1dp"
         android:background="@color/divider" />
 
-    <!-- 成績列表 -->
+    <!-- Solve list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
@@ -110,15 +110,31 @@
         android:layout_height="1dp"
         android:background="@color/divider" />
 
-    <!-- 返回計時器按鈕 -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnBackToTimer"
-        style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="wrap_content"
+    <!-- Bottom button row -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_margin="8dp"
-        android:text="Back"
-        android:textColor="@color/white" />
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="8dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBackToTimer"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="Back"
+            android:textColor="@color/white" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSettings"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settings"
+            android:textColor="@color/white" />
+
+    </LinearLayout>
 
 </LinearLayout>

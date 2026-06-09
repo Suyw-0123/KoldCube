@@ -17,6 +17,9 @@ public interface SolveDao {
     @Delete
     void deleteSolve(Solve solve);
 
+    @Query("DELETE FROM solve")
+    void deleteAll();
+
     @Update
     void updateSolve(Solve solve);
 

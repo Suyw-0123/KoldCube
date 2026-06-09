@@ -9,4 +9,5 @@
     <color name="status_dnf">#FFFF5252</color>
     <color name="surface_dark">#FF111111</color>
     <color name="divider">#FF333333</color>
+    <color name="text_secondary">#FFAAAAAA</color>
 </resources>

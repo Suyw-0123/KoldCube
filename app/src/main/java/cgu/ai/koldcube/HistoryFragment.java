@@ -2,7 +2,11 @@ package cgu.ai.koldcube;
 
 import android.app.Dialog;
 import android.os.Bundle;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -10,6 +14,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -36,6 +41,12 @@ public class HistoryFragment extends Fragment {
     private SolveViewModel viewModel;
     private SolveAdapter adapter;
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -55,6 +66,7 @@ public class HistoryFragment extends Fragment {
 
         adapter.setOnItemClickListener(this::showDetailDialog);
         setupSwipeToDelete();
+        registerForContextMenu(binding.recyclerView);
 
         viewModel.getAllSolves().observe(getViewLifecycleOwner(), solves -> {
             List<Solve> list = solves != null ? solves : new ArrayList<>();
@@ -64,6 +76,54 @@ public class HistoryFragment extends Fragment {
 
         binding.btnBackToTimer.setOnClickListener(v ->
                 ((MainActivity) requireActivity()).navigateTo(MainActivity.PAGE_TIMER));
+        binding.btnSettings.setOnClickListener(v ->
+                ((MainActivity) requireActivity()).navigateTo(MainActivity.PAGE_SETTINGS));
+    }
+
+    // ---- OptionsMenu ----
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_history, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_clear_all) {
+            new AlertDialog.Builder(requireContext())
+                    .setMessage(R.string.clear_all_confirm)
+                    .setPositiveButton(R.string.confirm, (d, w) -> viewModel.deleteAllSolves())
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
+            return true;
+        } else if (id == R.id.action_settings) {
+            ((MainActivity) requireActivity()).navigateTo(MainActivity.PAGE_SETTINGS);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    // ---- ContextMenu (per RecyclerView item) ----
+
+    @Override
+    public void onCreateContextMenu(@NonNull ContextMenu menu, @NonNull View v,
+                                    @Nullable ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        requireActivity().getMenuInflater().inflate(R.menu.menu_solve_item, menu);
+    }
+
+    @Override
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_delete_solve) {
+            int pos = adapter.getContextMenuPosition();
+            if (pos != RecyclerView.NO_POSITION && pos >= 0) {
+                viewModel.deleteSolve(adapter.getSolveAt(pos));
+            }
+            return true;
+        }
+        return super.onContextItemSelected(item);
     }
 
     private void setupSwipeToDelete() {

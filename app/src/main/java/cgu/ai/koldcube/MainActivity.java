@@ -13,6 +13,7 @@ import cgu.ai.koldcube.databinding.ActivityMainBinding;
 public class MainActivity extends AppCompatActivity {
     public static final int PAGE_TIMER = 0;
     public static final int PAGE_HISTORY = 1;
+    public static final int PAGE_SETTINGS = 2;
 
     private ActivityMainBinding binding;
 
@@ -39,12 +40,20 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public Fragment createFragment(int position) {
-            return position == PAGE_TIMER ? new TimerFragment() : new HistoryFragment();
+            switch (position) {
+                case PAGE_HISTORY:
+                    return new HistoryFragment();
+                case PAGE_SETTINGS:
+                    return new SettingsFragment();
+                case PAGE_TIMER:
+                default:
+                    return new TimerFragment();
+            }
         }
 
         @Override
         public int getItemCount() {
-            return 2;
+            return 3;
         }
     }
 }

@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@color/bg_black">
 
-    <!-- 打亂公式 -->
+    <!-- Scramble -->
     <TextView
         android:id="@+id/tvScramble"
         android:layout_width="0dp"
@@ -21,7 +21,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- 計時顯示區（可點擊/長按） -->
+    <!-- Timer loading animation -->
+    <ImageView
+        android:id="@+id/ivLoadingAnim"
+        android:layout_width="48dp"
+        android:layout_height="16dp"
+        android:layout_marginTop="8dp"
+        android:contentDescription="@string/app_name"
+        android:src="@drawable/anim_timer_loading"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvScramble" />
+
+    <!-- Timer display (tap / long-press) -->
     <TextView
         android:id="@+id/tvTimer"
         android:layout_width="0dp"
@@ -35,9 +48,9 @@
         app:layout_constraintBottom_toTopOf="@id/bottomBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvScramble" />
+        app:layout_constraintTop_toBottomOf="@id/ivLoadingAnim" />
 
-    <!-- 底部按鈕區 -->
+    <!-- Bottom button area -->
     <LinearLayout
         android:id="@+id/bottomBar"
         android:layout_width="0dp"
@@ -48,7 +61,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <!-- RESULT 狀態按鈕列 -->
+        <!-- RESULT status buttons -->
         <LinearLayout
             android:id="@+id/layoutResultButtons"
             android:layout_width="match_parent"
@@ -90,12 +103,12 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="刪除"
+                android:text="@string/delete"
                 android:textColor="@color/white" />
 
         </LinearLayout>
 
-        <!-- 切換至成績頁面 -->
+        <!-- Switch to history page -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnHistory"
             style="@style/Widget.Material3.Button.TextButton"
